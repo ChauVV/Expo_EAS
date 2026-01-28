@@ -1,16 +1,19 @@
-# EAS Update (OTA) Integration and Usage Guide
+# EAS Update Integration and Usage Guide (OTA)
 
-This document summarizes the process for setting up and using Expo Application Services (EAS) Update to push JavaScript changes instantly without rebuilding native binaries.
+This document summarizes the process of setting up and using Expo Application Services (EAS) Update to quickly update JavaScript source code without rebuilding the Native binary.
 
 ---
 
-## 1. Installation & Configuration (One-time Setup)
+## 1. Installation and Configuration (One-time setup)
 
 ### Install the library
-$ npx expo install expo-updates $
+```bash
+npx expo install expo-updates
+```
 
-### Configure app.json
-Ensure these fields exist to identify your project on the Expo servers:
+### Configure `app.json`
+Ensure the following fields exist to identify your project on the Expo server:
+```json
 {
   "expo": {
     "updates": { "url": "https://u.expo.dev/YOUR_PROJECT_ID" },
@@ -18,9 +21,11 @@ Ensure these fields exist to identify your project on the Expo servers:
     "extra": { "eas": { "projectId": "YOUR_PROJECT_ID" } }
   }
 }
+```
 
-### Configure eas.json
-Add the "channel" field so the Native App knows where to look for updates:
+### Configure `eas.json`
+Add the `"channel": "production"` line so the Native App knows where to look for updates:
+```json
 {
   "build": {
     "production": {
@@ -31,43 +36,48 @@ Add the "channel" field so the Native App knows where to look for updates:
     }
   }
 }
+```
 
 ---
 
-## 2. Cloud Pipeline Setup (One-time Setup)
+## 2. Cloud Pipeline Setup (One-time setup)
 
-This process establishes the connection between your Git branches and your production environment.
+This process builds the "pipeline" that delivers code from your Git branch to the user's app.
 
-1.  **Create Channel**: eas channel:create production (Select the master branch when prompted).
-2.  **Create Branch**: eas branch:create master (If it doesn't exist yet).
-3.  **Link them**: 
-    eas channel:edit production --branch master
-    
-    *Explanation: This command ensures the production channel always pulls the latest update from the master branch.*
-
----
-
-## 3. Shipping the Native Build
-
-Run a full build when you: Install new Native modules, change Icons/Splash screens, or update the appVersion.
-$ eas build --platform all --profile production --auto-submit $
-
-*Note: This build carries the "address" of the production channel hardcoded within the binary.*
+1. **Create Channel**: `eas channel:create production` (Select the `master` branch when prompted).
+2. **Create Branch**: `eas branch:create master` (If it doesn't already exist).
+3. **Link them**: 
+   ```bash
+   eas channel:edit production --branch master
+   ```
+   *Explanation: This command ensures that the `production` channel always pulls the latest code from the `master` branch.*
 
 ---
 
-## 4. Rapid JS Updates (OTA Update)
+## 3. Exporting the Native Build (Binary)
 
-Use this for: UI tweaks, text changes, React logic, or JS bug fixes.
-$ eas update --branch master --message "Description of changes" $
+You need to run this command when: You install new Native libraries, change the Icon/Splash screen, or change the `appVersion`.
+```bash
+eas build --platform all --profile production --auto-submit
+```
+*Note: This build will have the "address" of the `production` channel embedded within it.*
 
 ---
 
-## 💡 How Updates Are Applied on Devices
+## 4. Fast JS Code Update (OTA Update)
 
-1.  **First Launch**: The app silently downloads the update in the background (takes approx. 10–30 seconds).
-2.  **Force Close (Kill app)**: Swipe the app up to close it completely.
-3.  **Second Launch**: The app swaps the old code for the new update.
+Use this when: You fix CSS, text, React logic, or JS bugs.
+```bash
+eas update --branch master --message "Description of changes"
+```
+
+---
+
+## 💡 Rules for Receiving Updates on Devices
+
+1. **Open app for the 1st time**: The app silently downloads the update in the background (takes about 10-30 seconds).
+2. **Force close (Kill app)**: Swipe the app up to close it completely.
+3. **Open app for the 2nd time**: The app will replace the old code with the new updated code.
 
 > [!IMPORTANT]
-> Runtime Version Compatibility: A JS Update will only be delivered to the specific "runtime version" it was built for. If you increment the version in app.json to 1.0.3, you must submit a new Native Build to receive updates targeted at that version.
+> **Runtime Version**: JS Updates are only sent to the matching "runtime version" (e.g., 1.0.2). If you increase the version in `app.json` to 1.0.3, you must rebuild and submit a new Native App to receive updates intended for version 1.0.3.
